@@ -19,6 +19,7 @@ declare class Request {
     constructor(req: http.IncomingMessage);
     method: string | undefined;
     url: string | undefined;
+    parseBody(): Promise<void>;
 }
 declare class Response {
     private res;
@@ -35,6 +36,7 @@ export declare class GoogleisimaExpress {
     post(path: string, handler: RequestHandler): void;
     put(path: string, handler: RequestHandler): void;
     delete(path: string, handler: RequestHandler): void;
+    private parseParams;
     listen(port: number, callback?: () => void): void;
 }
 declare const _default: GoogleisimaExpress;

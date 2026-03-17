@@ -1,5 +1,32 @@
 import * as http from 'http';
 
+/*
+WORKSHOP STARTER TODOs
+
+Use this file as the implementation track during the workshop.
+
+TODO 1: Understand the core types
+- RequestHandler
+- NextFunction
+- Route
+
+TODO 2: Build request/response wrappers
+- Request.parseBody()
+- Response.send(), Response.json(), Response.status()
+
+TODO 3: Implement app registration methods
+- use(), get(), post(), put(), delete()
+
+TODO 4: Implement dynamic route param matching
+- parseParams()
+- support paths like /users/:id
+
+TODO 5: Wire middleware pipeline and route execution
+- run middleware in order
+- call route handler
+- return 404 when no route matches
+*/
+
 // Add interfaces for request parameters
 interface RequestParams {
   [key: string]: string;
@@ -39,6 +66,7 @@ class Request {
   url: string | undefined;
 
   async parseBody(): Promise<void> {
+    // WORKSHOP TODO 2: explain why GET/DELETE usually skip body parsing
     if (this.req.method === 'GET' || this.req.method === 'DELETE') {
       return Promise.resolve();
     }
@@ -66,12 +94,14 @@ class Response {
 
   // Send JSON response
   json(data: any) {
+    // WORKSHOP TODO 2: set content type before ending response
     this.res.setHeader('Content-Type', 'application/json');
     this.res.end(JSON.stringify(data));
   }
 
   // Send text response
   send(text: string) {
+    // WORKSHOP TODO 2: text helper for simple responses
     this.res.setHeader('Content-Type', 'text/plain');
     this.res.end(text);
   }
@@ -91,30 +121,36 @@ export class GoogleisimaExpress {
 
   // Add middleware
   use(handler: RequestHandler) {
+    // WORKSHOP TODO 3: register middleware in order
     this.middlewares.push(handler);
   }
 
   // Handle GET requests
   get(path: string, handler: RequestHandler) {
+    // WORKSHOP TODO 3: route registration for GET
     this.routes.push({ method: 'GET', path, handler });
   }
 
   // Handle POST requests
   post(path: string, handler: RequestHandler) {
+    // WORKSHOP TODO 3: route registration for POST
     this.routes.push({ method: 'POST', path, handler });
   }
 
   // Add PUT request handler
   put(path: string, handler: RequestHandler) {
+    // WORKSHOP TODO 3: route registration for PUT
     this.routes.push({ method: 'PUT', path, handler });
   }
 
   // Add DELETE request handler
   delete(path: string, handler: RequestHandler) {
+    // WORKSHOP TODO 3: route registration for DELETE
     this.routes.push({ method: 'DELETE', path, handler });
   }
 
   private parseParams(routePath: string, requestUrl: string): RequestParams {
+    // WORKSHOP TODO 4: compare route and URL segments, extract :params
     const routeParts = routePath.split('/');
     const urlParts = requestUrl.split('/');
     const params: RequestParams = {};
@@ -135,11 +171,11 @@ export class GoogleisimaExpress {
 
   // Start the server
   listen(port: number, callback?: () => void) {
-    const server = http.createServer((req, res) => {
+    const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
       const request = new Request(req);
       const response = new Response(res);
 
-      // Find matching route with params first
+      // WORKSHOP TODO 4: find route match with support for dynamic params
       const route = this.routes.find(r => {
         if (r.method !== req.method) return false;
         
@@ -157,12 +193,12 @@ export class GoogleisimaExpress {
         return true;
       });
 
-      // Set route params if found
+      // WORKSHOP TODO 4: assign parsed params to request object
       if (route && request.url) {
         request.params = this.parseParams(route.path, request.url);
       }
 
-      // Parse body then handle request
+      // WORKSHOP TODO 5: parse body, execute middleware chain, then route
       request.parseBody().then(() => {
         let currentMiddleware = 0;
         const next = () => {
@@ -171,6 +207,7 @@ export class GoogleisimaExpress {
           } else if (route) {
             route.handler(request, response, () => {});
           } else {
+            // WORKSHOP TODO 5: fallback when no route matches
             response.status(404).send('Page not found 😢');
           }
         };
